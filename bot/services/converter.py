@@ -6,7 +6,7 @@ from services.stars import get_stars_rate
 CRYPTO_CCY = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
-    "GRAM": "toncoin",
+    "GRAM": "the-open-network",
     "SOL": "solana",
     "BNB": "binancecoin",
 }
