@@ -3,7 +3,6 @@ import json
 
 
 async def get_crypto_prices(ids: list, vs: str = "usd") -> dict:
-    """Цены крипты через Binance."""
     mapping = {
         "bitcoin": "BTCUSDT",
         "ethereum": "ETHUSDT",
