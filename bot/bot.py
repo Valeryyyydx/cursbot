@@ -95,10 +95,10 @@ async def show_fiat(cb: CallbackQuery):
 @dp.callback_query(F.data == "crypto")
 async def show_crypto(cb: CallbackQuery):
     await cb.answer("Загружаю...")
-    ids = ["bitcoin", "ethereum", "toncoin", "solana", "binancecoin"]
+    ids = ["bitcoin", "ethereum", "the-open-network", "solana", "binancecoin"]
     names = {
         "bitcoin": "BTC", "ethereum": "ETH",
-        "toncoin": "GRAM", "solana": "SOL", "binancecoin": "BNB",
+    "the-open-network": "GRAM", "solana": "SOL", "binancecoin": "BNB",
     }
     data = await get_crypto_prices(ids)
     if not data:
