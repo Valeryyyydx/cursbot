@@ -1,42 +1,44 @@
 import aiohttp
-import json
 
 
 async def get_crypto_prices(ids: list, vs: str = "usd") -> dict:
+    """Цены крипты через CoinCap. Работает из США."""
     mapping = {
-        "bitcoin": "BTCUSDT",
-        "ethereum": "ETHUSDT",
-        "the-open-network": "TONUSDT",
-        "solana": "SOLUSDT",
-        "binancecoin": "BNBUSDT",
+        "bitcoin": "bitcoin",
+        "ethereum": "ethereum",
+        "the-open-network": "toncoin",
+        "solana": "solana",
+        "binancecoin": "binance-coin",
     }
 
-    symbols = [mapping[i] for i in ids if i in mapping]
-    if not symbols:
+    coin_ids = [mapping[i] for i in ids if i in mapping]
+    if not coin_ids:
         return {}
 
-    url = "https://api.binance.com/api/v3/ticker/24hr"
-    params = {"symbols": json.dumps(symbols)}
+    url = "https://api.coincap.io/v2/assets"
+    params = {"ids": ",".join(coin_ids)}
 
     try:
         async with aiohttp.ClientSession() as s:
             async with s.get(url, params=params, timeout=10) as r:
                 if r.status != 200:
-                    print(f"Binance status: {r.status}")
+                    print(f"CoinCap status: {r.status}")
                     return {}
                 data = await r.json()
     except Exception as e:
-        print(f"Binance error: {e}")
+        print(f"CoinCap error: {e}")
         return {}
 
     result = {}
-    for item in data:
-        sym = item.get("symbol", "")
-        for cid, s in mapping.items():
-            if s == sym:
+    for item in data.get("data", []):
+        coin_id = item.get("id", "")
+        for cid, mapping_id in mapping.items():
+            if mapping_id == coin_id:
+                price = float(item.get("priceUsd", 0) or 0)
+                change = float(item.get("changePercent24Hr", 0) or 0)
                 result[cid] = {
-                    "usd": float(item.get("lastPrice", 0)),
-                    "usd_24h_change": float(item.get("priceChangePercent", 0)),
+                    "usd": price,
+                    "usd_24h_change": change,
                 }
                 break
     return result
