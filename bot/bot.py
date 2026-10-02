@@ -42,7 +42,25 @@ class AlertFSM(StatesGroup):
     threshold = State()
 
 
-# ================= START =================
+# ========== HEALTHCHECK (главное для UptimeRobot) ==========
+
+async def healthcheck(request):
+    return web.Response(text="OK - bot is alive")
+
+
+async def start_webserver():
+    app = web.Application()
+    app.router.add_get("/", healthcheck)
+    app.router.add_get("/health", healthcheck)
+    port = int(os.getenv("PORT", 8080))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"Webserver started on port {port}")
+
+
+# ========== START ==========
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
@@ -69,7 +87,7 @@ async def back_to_menu(cb: CallbackQuery, state: FSMContext):
         pass
 
 
-# ================= КУРСЫ =================
+# ========== КУРСЫ ==========
 
 @dp.callback_query(F.data == "fiat")
 async def show_fiat(cb: CallbackQuery):
@@ -183,7 +201,7 @@ async def cmd_rate(message: Message):
     )
 
 
-# ================= WATCHLIST =================
+# ========== WATCHLIST ==========
 
 @dp.callback_query(F.data == "wl:show")
 async def wl_show(cb: CallbackQuery):
@@ -203,10 +221,7 @@ async def wl_show(cb: CallbackQuery):
 async def wl_add(cb: CallbackQuery):
     await cb.answer()
     try:
-        await cb.message.edit_text(
-            "➕ <b>Выбери валюту:</b>",
-            reply_markup=wl_currency_kb("add"),
-        )
+        await cb.message.edit_text("➕ <b>Выбери валюту:</b>", reply_markup=wl_currency_kb("add"))
     except Exception:
         pass
 
@@ -230,10 +245,7 @@ async def wl_del(cb: CallbackQuery):
             pass
         return
     try:
-        await cb.message.edit_text(
-            "🗑 <b>Что удалить?</b>",
-            reply_markup=wl_currency_kb("del", items),
-        )
+        await cb.message.edit_text("🗑 <b>Что удалить?</b>", reply_markup=wl_currency_kb("del", items))
     except Exception:
         pass
 
@@ -246,7 +258,7 @@ async def wl_do_del(cb: CallbackQuery):
     await wl_del(cb)
 
 
-# ================= ALERTS =================
+# ========== ALERTS ==========
 
 @dp.callback_query(F.data == "al:show")
 async def al_show(cb: CallbackQuery):
@@ -271,10 +283,7 @@ async def al_new(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
     await state.set_state(AlertFSM.currency)
     try:
-        await cb.message.edit_text(
-            "🔔 <b>Шаг 1/3. Выбери валюту:</b>",
-            reply_markup=al_currency_kb(),
-        )
+        await cb.message.edit_text("🔔 <b>Шаг 1/3. Выбери валюту:</b>", reply_markup=al_currency_kb())
     except Exception:
         pass
 
@@ -358,10 +367,7 @@ async def al_del(cb: CallbackQuery):
             pass
         return
     try:
-        await cb.message.edit_text(
-            "🗑 <b>Что удалить?</b>",
-            reply_markup=al_del_kb(alerts),
-        )
+        await cb.message.edit_text("🗑 <b>Что удалить?</b>", reply_markup=al_del_kb(alerts))
     except Exception:
         pass
 
@@ -377,23 +383,7 @@ async def al_do_del(cb: CallbackQuery):
     await al_show(cb)
 
 
-# ================= HEALTHCHECK + ЗАПУСК =================
-
-async def healthcheck(request):
-    return web.Response(text="OK - bot is alive")
-
-
-async def start_webserver():
-    app = web.Application()
-    app.router.add_get("/", healthcheck)
-    app.router.add_get("/health", healthcheck)
-    port = int(os.getenv("PORT", 8080))
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    print(f"Webserver started on port {port}")
-
+# ========== ЗАПУСК ==========
 
 async def main():
     await init_db()
